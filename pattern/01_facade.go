@@ -1,7 +1,7 @@
 package pattern
 
 /*
-Паттерн "Фасад" скрывает сложные детали работы с HTTP-клиентом, предлагая разработчикам 
+Паттерн "Фасад" скрывает сложные детали работы с HTTP-клиентом, предлагая разработчикам
 интуитивно понятный способ отправки запросов и обработки ответов.
 
 Основные компоненты:
@@ -29,9 +29,9 @@ package pattern
 - Веб-приложения, которые должны взаимодействовать с несколькими внешними сервисами.
 */
 
-
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -97,8 +97,11 @@ func (h *HTTPFacade) Post(url string, data []byte) (string, error) {
 }
 
 // StartServer - Запускает локальный HTTP-сервер
-func StartServer(wg *sync.WaitGroup) {
+func StartServer(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
+
+	server := &http.Server{Addr: ":8080"}
+
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello from GET request!")
 	})
@@ -106,16 +109,26 @@ func StartServer(wg *sync.WaitGroup) {
 		body, _ := io.ReadAll(r.Body)
 		fmt.Fprintf(w, "Hello from POST request! You sent: %s", string(body))
 	})
-	http.ListenAndServe(":8080", nil)
-}
 
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Server failed: %s\n", err)
+		}
+	}()
+
+	<-ctx.Done() // Ожидание завершения контекста
+	server.Shutdown(ctx)
+}
 func main() {
+	// Создаем контекст с возможностью отмены
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Используем WaitGroup для корректного завершения программы после выполнения всех горутин
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	// Запускаем сервер в отдельной горутине
-	go StartServer(wg)
+	// Запускаем сервер в отдельной горутине с использованием контекста
+	go StartServer(wg, ctx)
 
 	time.Sleep(time.Second) // Даем серверу время на старт
 
@@ -138,6 +151,8 @@ func main() {
 	} else {
 		fmt.Println("POST Response:", postResponse)
 	}
+
+	cancel() // Отменяем контекст
 
 	wg.Wait() // Ждем завершения сервера
 }
