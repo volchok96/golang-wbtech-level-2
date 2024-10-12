@@ -107,7 +107,7 @@ func (e *ErrorLogger) Log(level LogLevel, message string) {
 	}
 }
 
-func main() {
+func main05() {
 	// Создаем логгеры для каждого уровня
 	debugLogger := &DebugLogger{}
 	infoLogger := &InfoLogger{}
