@@ -279,7 +279,6 @@ func isSorted(lines []string, column int, numeric bool, ignoreSpaces bool, human
 }
 
 // Индекс месяца
-// Индекс месяца
 func monthIndex(line string) int {
 	months := map[string]int{
 		"Jan": 1, "January": 1,
