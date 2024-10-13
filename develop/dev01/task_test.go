@@ -4,17 +4,12 @@ import (
 	"errors"
 	"testing"
 	"time"
-
-	"github.com/beevik/ntp"
 )
-
-// Мокаем функцию ntp.Time для тестирования
-var mockNTPTime = ntp.Time
 
 // Тест для успешного получения времени
 func TestGetExactTime_Success(t *testing.T) {
-	// Мокаем функцию ntp.Time для теста
-	mockNTPTime = func(host string) (time.Time, error) {
+	// Мокаем функцию main.getNTPTime для теста
+	getNTPTime = func() (time.Time, error) {
 		// Используем текущее время системы для теста
 		return time.Now(), nil
 	}
@@ -34,16 +29,15 @@ func TestGetExactTime_Success(t *testing.T) {
 
 // Тест для случая ошибки
 func TestGetExactTime_Error(t *testing.T) {
-	// Мокаем ошибку в функции ntp.Time
-	mockNTPTime = func(host string) (time.Time, error) {
+	// Мокаем ошибку
+	getNTPTime = func() (time.Time, error) {
 		return time.Time{}, errors.New("NTP server error")
 	}
 
 	// Вызов функции
 	_, err := getExactTime()
 	if err == nil {
-		t.Log("Expected error, got none")
-		return
+		t.Fatalf("Expected error, got none")
 	}
 
 	expectedErr := "NTP server error"

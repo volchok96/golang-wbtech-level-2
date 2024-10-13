@@ -21,13 +21,14 @@ import (
 	"github.com/beevik/ntp"
 )
 
+// Обертка вокруг ntp.Time
+var getNTPTime = func() (time.Time, error) {
+	return ntp.Time("pool.ntp.org")
+}
+
 // Функция для получения точного времени с обработкой ошибок
 func getExactTime() (time.Time, error) {
-	exactTime, err := ntp.Time("pool.ntp.org")
-	if err != nil {
-		return time.Time{}, err
-	}
-	return exactTime, nil
+	return getNTPTime()
 }
 
 func main() {
